@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unggah Dataset</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+
+    body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('/resources/bg.png');
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background: #F8F6E3;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 12px 20px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.result {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #333;
+}
+
+.plot {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.plot img {
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Unggah Dataset</h1>
+        <form id="uploadForm">
+            <div class="input-group">
+                <label for="fileInput">Pilih Dataset:</label>
+                <input type="file" id="fileInput" name="fileInput" accept=".csv" required>
+            </div>
+            <button type="submit">Kirim</button>
+        </form>
+        <div class="result" id="result"></div>
+        <div class="plot" id="plot"></div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Harap pilih file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Menghapus hasil perhitungan lama
+            document.getElementById('result').innerText = '';
+            document.getElementById('plot').innerHTML = '';
+
+            // Tampilkan pesan yang menunjukkan bahwa file telah dikirim dan sedang menunggu grafik
+            document.getElementById('result').innerText = 'Data terkirim! Grafik akan segera ditampilkan.';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = 'Hasil Pemrosesan:\n'
+                    + 'Test MSE: ' + data.result.test_mse + '\n'
+                    + 'Test R2: ' + data.result.test_r2 + '\n'
+                    + 'Test MAE: ' + data.result.test_mae + '\n'
+                    + 'Persentase Kerusakan Diprediksi: ' + data.result.avg_damage_percentage.toFixed(2) + '%';
+
+                // Tampilkan plot
+                const plotDiv = document.getElementById('plot');
+                plotDiv.innerHTML = '<img src="data:image/png;base64,' + data.result.plot + '"/>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerText = 'Terjadi kesalahan.';
+            });
+        });
+    </script>
+</body>
+</html>
